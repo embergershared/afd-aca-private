@@ -63,7 +63,7 @@ resource "azurerm_subnet" "wkld_subnet" {
   name                                          = "workload-snet"
   resource_group_name                           = azurerm_resource_group.this.name
   virtual_network_name                          = azurerm_virtual_network.this.name
-  private_endpoint_network_policies_enabled     = false
+  private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = false
   address_prefixes                              = [replace(var.vnet_address_space, "0/26", "0/27")]
 
@@ -82,7 +82,7 @@ resource "azurerm_subnet" "pe_subnet" {
   name                                          = "pe-snet"
   resource_group_name                           = azurerm_resource_group.this.name
   virtual_network_name                          = azurerm_virtual_network.this.name
-  private_endpoint_network_policies_enabled     = true
+  private_endpoint_network_policies             = "Enabled"
   private_link_service_network_policies_enabled = false
   address_prefixes                              = [replace(var.vnet_address_space, "0/26", "32/28")]
 }
@@ -250,11 +250,13 @@ resource "azurerm_container_app" "app" {
   name                         = "aca-app-s4-${var.res_suffix}"
   container_app_environment_id = azurerm_container_app_environment.this.id
   resource_group_name          = azurerm_resource_group.this.name
-  revision_mode                = "Single"
+  revision_mode                = "Multiple"
 
   workload_profile_name = "Consumption"
 
   template {
+    min_replicas    = 1
+    revision_suffix = "fixv8qj"
     container {
       name   = "simple-hello-world-container"
       image  = "mcr.microsoft.com/k8se/quickstart:latest"
@@ -270,31 +272,39 @@ resource "azurerm_container_app" "app" {
     transport                  = "auto"
 
     traffic_weight {
-      latest_revision = true
+      latest_revision = false
       percentage      = 100
+      revision_suffix = "fixv8qj"
     }
   }
 }
 
-# resource "azurerm_container_app_job" "job" {
-#   # Not there yet
-#   # In PR: https://github.com/hashicorp/terraform-provider-azurerm/pull/23871
-#   name                         = "aca-job-s4-${var.res_suffix}"
-#   container_app_environment_id = azurerm_container_app_environment.this.id
-#   resource_group_name          = azurerm_resource_group.this.name
-#   revision_mode                = "Single"
+resource "azurerm_container_app_job" "job" {
+  # In PR: https://github.com/hashicorp/terraform-provider-azurerm/pull/23871
+  # Requires "hashicorp/azurerm >= 3.103"
+  name                         = "aca-job-s4-${var.res_suffix}"
+  container_app_environment_id = azurerm_container_app_environment.this.id
+  resource_group_name          = azurerm_resource_group.this.name
+  location                     = azurerm_resource_group.this.location
 
-#   workload_profile_name = "Consumption"
+  workload_profile_name      = "Consumption"
+  replica_timeout_in_seconds = 1800
 
-#   template {
-#     container {
-#       name   = "simple-hello-world-container"
-#       image  = "mcr.microsoft.com/k8se/quickstart:latest"
-#       cpu    = 0.25
-#       memory = "0.5Gi"
-#     }
-#   }
-# }
+  manual_trigger_config {
+    parallelism              = 1
+    replica_completion_count = 1
+  }
+
+  template {
+    container {
+      name    = "aca-job-s4-afd-aca-priv-01"
+      image   = "docker.io/hello-world:latest"
+      cpu     = 0.5
+      memory  = "1Gi"
+      command = ["/bin/bash", "-c", "echo hello; sleep 100000"]
+    }
+  }
+}
 
 
 

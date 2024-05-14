@@ -29,14 +29,14 @@ The problem this repository explores can be described with:
 
     The `origin` must have a public IP or a DNS hostname that can be resolved publicly, as described here: [What type of resources are currently compatible as an origin?](https://learn.microsoft.com/en-us/azure/frontdoor/front-door-faq#what-type-of-resources-are-currently-compatible-as-an-origin-)
 
-- The Azure Front Door `origin` can't connect natively to a Virtual Network.
+- An Azure Front Door `origin` can't connect natively to a Virtual Network.
 
-- To use an Azure hosted `origin` **and get its traffic kept within Azure backbone**, not through public internet, it is required to use an `Azure Private Link` origin. Details are explained here: [Secure your Origin with Private Link in Azure Front Door Premium](https://learn.microsoft.com/en-us/azure/frontdoor/private-link)
+- To use an Azure hosted `origin` **and get its traffic kept within Azure backbone**, not through public internet, it is required to use an `Azure Private Link` enabled target origin. Details are explained here: [Secure your Origin with Private Link in Azure Front Door Premium](https://learn.microsoft.com/en-us/azure/frontdoor/private-link)
 
 Azure Container Apps DO NOT support [Azure Private Link](https://learn.microsoft.com/en-us/azure/private-link/private-link-overview) yet.
-When this feature is available, that will be the most secure option to expose [Internal](https://learn.microsoft.com/en-us/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli#accessibility-levels) Container Apps to the public internet through Azure Front Door.
+When this feature is available, that will be the most secure option to expose an [Internal](https://learn.microsoft.com/en-us/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli#accessibility-levels) Container Environment / Apps to the public internet through Azure Front Door.
 
-_In the meantime, how can we deploy an Azure Container Apps application with Azure Front Door in the most secure manner available today?_
+_In the meantime, how can we deploy an Azure Container Apps application through Azure Front Door in the most secure manner available today?_
 
 ## Solutions
 
@@ -89,17 +89,17 @@ It follows the [Secure traffic to Azure Front Door origins](https://learn.micros
 
 - [Front Door identifier](https://learn.microsoft.com/en-us/azure/frontdoor/origin-security?tabs=app-service-functions&pivots=front-door-standard-premium#front-door-identifier):
 
-  - When Front Door makes a request to an `origin`, it adds the `X-Azure-FDID` request header. The origin can inspect the header on incoming requests andd `allow`/`reject` the connection.
+  - When Front Door makes a request to an `origin`, it adds the `X-Azure-FDID` request header. The origin can inspect the header of the incoming request and `allow`/`reject` the connection based on the `X-Azure-FDID` value compared to the know `Front Door ID`.
 
   - To use this identifier, the application must inspect the HTTP headers and do the check. It requires coding or settings. These are not implemented in the default Azure Container Apps application used in this repository.
 
 The above describes what is found and used in this repository.
 
-#### A variation with a reverse proxy container in the Container App Environment
+#### A variation: use a reverse proxy container within the Container App Environment
 
-There is variation of it to leverage the same features which is:
+There is variation that consists in leveraging the same features but not exposing directly the apps "externally":
 
-- Creating only 1 `Container App` with `Ingress traffic` set to `Accepting traffic from anywhere` with the `IP Restrictions`, that runs a `reverse proxy` container (like nginx). This reverse proxy is configured to do the `X-Azure-FDID` filtering and uses the other `Container Apps` as `backends`.
+- Creating only 1 `Container App` with `Ingress traffic` set to `Accepting traffic from anywhere` with the `IP Restrictions`, that runs a `reverse proxy` container (like nginx). This reverse proxy is configured to check the `X-Azure-FDID` and use the other `Container Apps` as `backends` targets.
 
 - The other `Container Apps`, the ones with the applications, are deployed with `Ingress traffic` set to `Limited to Container Apps Environment`.
 

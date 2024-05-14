@@ -139,7 +139,7 @@ It requires values to be provided, and follows the recommended Azure Landing Zon
 
 - a subscription `Networking` with:
 
-  - a Hub `Virtual Network` that will be peered with the `Container Apps` `Virtual Network`
+  - a Hub `Virtual Network` that will be peered with the Container Apps' `Virtual Network`
   - all adequate `Private DNS resolution` and `Routing` for connectivity
 
 - a subscription for the workload (usually called `Application Landing Zone`)

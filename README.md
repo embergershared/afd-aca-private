@@ -121,3 +121,4 @@ It is documented here: [Protect Azure Container Apps with Web Application Firewa
 
     ![AFD endpoint](./img/afd-endpoint-to-aks-pls.jpg)
 
+  > Note: Using `Private Link` as an `origin` enforces the `Certificate subject name validation`. The `Origin host header` must be matched with the appropriate TLS certificate for the connection to happen.

@@ -267,19 +267,20 @@ resource "azurerm_route" "hub_jumpboxes_to_applz_vnet_route" {
 #--------------------------------------------------------------
 #   Azure Container App resources
 #--------------------------------------------------------------
-###  Internal Azure Container App with VNet integration
-resource "azurerm_container_app_environment" "priv_env" {
-  name                = "aca-priv-env-s4-${var.res_suffix}"
+###  External Azure Container App (default networking)
+resource "azurerm_container_app_environment" "pub_def_env" {
+  name                = "aca-env-pub-default-s4-${var.res_suffix}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
-  infrastructure_resource_group_name = "${azurerm_resource_group.this.name}-infra-priv"
-  infrastructure_subnet_id           = azurerm_subnet.acaenv_priv_subnet.id # Must be /21 or larger
-  internal_load_balancer_enabled     = true
-  zone_redundancy_enabled            = false
+  infrastructure_resource_group_name = "${azurerm_resource_group.this.name}-infra-pub-default"
+  internal_load_balancer_enabled     = null
+  infrastructure_subnet_id           = null
+  zone_redundancy_enabled            = null
   docker_bridge_cidr                 = null
   platform_reserved_cidr             = null
   platform_reserved_dns_ip_address   = null
+  log_analytics_workspace_id         = data.azurerm_log_analytics_workspace.main_region_logdiag_law.id
 
   workload_profile {
     name                  = "Consumption"
@@ -287,10 +288,11 @@ resource "azurerm_container_app_environment" "priv_env" {
   }
 
   tags = azurerm_resource_group.this.tags
+  # Id Format: "/subscriptions/<sub number>/resourceGroups/<rg name>/providers/Microsoft.App/managedEnvironments/aca-env-pub"
 }
-resource "azurerm_container_app" "priv_app" {
-  name                         = "aca-priv-app-s4-${var.res_suffix}"
-  container_app_environment_id = azurerm_container_app_environment.priv_env.id
+resource "azurerm_container_app" "pub_app" {
+  name                         = "aca-pub-default-app-s4-${var.res_suffix}"
+  container_app_environment_id = azurerm_container_app_environment.pub_def_env.id
   resource_group_name          = azurerm_resource_group.this.name
   revision_mode                = "Multiple"
 
@@ -309,7 +311,7 @@ resource "azurerm_container_app" "priv_app" {
 
   ingress {
     allow_insecure_connections = false
-    external_enabled           = false
+    external_enabled           = true
     target_port                = 80
     transport                  = "http" # "auto"
 
@@ -319,14 +321,24 @@ resource "azurerm_container_app" "priv_app" {
       # revision_suffix = "fixv8qj" # Must NOT be set during creation
       percentage = 100
     }
+
+    dynamic "ip_security_restriction" {
+      for_each = local.afd_ip_v4_ranges
+      content {
+        action           = "Allow"
+        description      = "ServiceTags_Public_20240506.json"
+        ip_address_range = ip_security_restriction.value
+        name             = "AzureFrontDoor.Backend"
+      }
+    }
   }
 }
 /*
-resource "azurerm_container_app_job" "priv_job" {
+resource "azurerm_container_app_job" "pub_def_job" {
   # In PR: https://github.com/hashicorp/terraform-provider-azurerm/pull/23871
   # Requires "hashicorp/azurerm >= 3.103"
-  name                         = "aca-priv-job-s4-${var.res_suffix}"
-  container_app_environment_id = azurerm_container_app_environment.priv_env.id
+  name                         = "aca-pub-job-s4-${var.res_suffix}"
+  container_app_environment_id = azurerm_container_app_environment.pub_def_env.id
   resource_group_name          = azurerm_resource_group.this.name
   location                     = azurerm_resource_group.this.location
 
@@ -352,7 +364,7 @@ resource "azurerm_container_app_job" "priv_job" {
 
 ###  External Azure Container App with custom VNet
 resource "azurerm_container_app_environment" "pub_vnet_env" {
-  name                = "aca-pub-env-s4-${var.res_suffix}"
+  name                = "aca-env-pub-vnet-s4-${var.res_suffix}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
@@ -445,20 +457,19 @@ resource "azurerm_container_app_job" "pub_vnet_job" {
 }
 #*/
 
-###  External Azure Container App (default networking)
-resource "azurerm_container_app_environment" "pub_def_env" {
-  name                = "aca-pub-default-env-s4-${var.res_suffix}"
+###  Internal Azure Container App with VNet integration
+resource "azurerm_container_app_environment" "priv_env" {
+  name                = "aca-env-priv-s4-${var.res_suffix}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
-  infrastructure_resource_group_name = "${azurerm_resource_group.this.name}-infra-pub"
-  internal_load_balancer_enabled     = null
-  infrastructure_subnet_id           = null
-  zone_redundancy_enabled            = null
+  infrastructure_resource_group_name = "${azurerm_resource_group.this.name}-infra-priv"
+  infrastructure_subnet_id           = azurerm_subnet.acaenv_priv_subnet.id # Must be /21 or larger
+  internal_load_balancer_enabled     = true
+  zone_redundancy_enabled            = false
   docker_bridge_cidr                 = null
   platform_reserved_cidr             = null
   platform_reserved_dns_ip_address   = null
-  log_analytics_workspace_id         = data.azurerm_log_analytics_workspace.main_region_logdiag_law.id
 
   workload_profile {
     name                  = "Consumption"
@@ -466,11 +477,10 @@ resource "azurerm_container_app_environment" "pub_def_env" {
   }
 
   tags = azurerm_resource_group.this.tags
-  # Id Format: "/subscriptions/<sub number>/resourceGroups/<rg name>/providers/Microsoft.App/managedEnvironments/aca-env-pub"
 }
-resource "azurerm_container_app" "pub_app" {
-  name                         = "aca-pub-default-app-s4-${var.res_suffix}"
-  container_app_environment_id = azurerm_container_app_environment.pub_def_env.id
+resource "azurerm_container_app" "priv_app" {
+  name                         = "aca-priv-app-s4-${var.res_suffix}"
+  container_app_environment_id = azurerm_container_app_environment.priv_env.id
   resource_group_name          = azurerm_resource_group.this.name
   revision_mode                = "Multiple"
 
@@ -489,7 +499,7 @@ resource "azurerm_container_app" "pub_app" {
 
   ingress {
     allow_insecure_connections = false
-    external_enabled           = true
+    external_enabled           = false
     target_port                = 80
     transport                  = "http" # "auto"
 
@@ -499,24 +509,14 @@ resource "azurerm_container_app" "pub_app" {
       # revision_suffix = "fixv8qj" # Must NOT be set during creation
       percentage = 100
     }
-
-    dynamic "ip_security_restriction" {
-      for_each = local.afd_ip_v4_ranges
-      content {
-        action           = "Allow"
-        description      = "ServiceTags_Public_20240506.json"
-        ip_address_range = ip_security_restriction.value
-        name             = "AzureFrontDoor.Backend"
-      }
-    }
   }
 }
 /*
-resource "azurerm_container_app_job" "pub_def_job" {
+resource "azurerm_container_app_job" "priv_job" {
   # In PR: https://github.com/hashicorp/terraform-provider-azurerm/pull/23871
   # Requires "hashicorp/azurerm >= 3.103"
-  name                         = "aca-pub-job-s4-${var.res_suffix}"
-  container_app_environment_id = azurerm_container_app_environment.pub_def_env.id
+  name                         = "aca-priv-job-s4-${var.res_suffix}"
+  container_app_environment_id = azurerm_container_app_environment.priv_env.id
   resource_group_name          = azurerm_resource_group.this.name
   location                     = azurerm_resource_group.this.location
 

@@ -109,7 +109,7 @@ It is documented here: [Protect Azure Container Apps with Web Application Firewa
 
 ### Option 3: Wait for Azure Container Apps to support Azure Private Link
 
-- When `Private Link` will be available for `Container Environment`, the connection will be similar to the one actually available with `AKS` with an `Internal Load Balancer` with `Private Link Service`.
+- When `Private Link` will be available for `Container Environment`, the connection will be similar to the one actually available with `AKS` through an `Internal Load Balancer` with `Private Link Service`.
 
 - Here's an example of `origin` that uses `Private Link` on `AKS`:
 

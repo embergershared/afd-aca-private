@@ -267,13 +267,14 @@ resource "azurerm_route" "hub_jumpboxes_to_applz_vnet_route" {
 #--------------------------------------------------------------
 #   Azure Container App resources
 #--------------------------------------------------------------
+/*
 ###  External Azure Container App (default networking)
 resource "azurerm_container_app_environment" "pub_def_env" {
-  name                = "aca-env-pub-default-s4-${var.res_suffix}"
+  name                = "aca-env-pub-def-${var.res_suffix}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
-  infrastructure_resource_group_name = "${azurerm_resource_group.this.name}-infra-pub-default"
+  infrastructure_resource_group_name = "${azurerm_resource_group.this.name}-infra-pub-def"
   internal_load_balancer_enabled     = null
   infrastructure_subnet_id           = null
   zone_redundancy_enabled            = null
@@ -290,8 +291,8 @@ resource "azurerm_container_app_environment" "pub_def_env" {
   tags = azurerm_resource_group.this.tags
   # Id Format: "/subscriptions/<sub number>/resourceGroups/<rg name>/providers/Microsoft.App/managedEnvironments/aca-env-pub"
 }
-resource "azurerm_container_app" "pub_app" {
-  name                         = "aca-pub-default-app-s4-${var.res_suffix}"
+resource "azurerm_container_app" "pub_def_app" {
+  name                         = substr("aca-app-pub-def-${var.res_suffix}", 0, 32)
   container_app_environment_id = azurerm_container_app_environment.pub_def_env.id
   resource_group_name          = azurerm_resource_group.this.name
   revision_mode                = "Multiple"
@@ -364,7 +365,7 @@ resource "azurerm_container_app_job" "pub_def_job" {
 
 ###  External Azure Container App with custom VNet
 resource "azurerm_container_app_environment" "pub_vnet_env" {
-  name                = "aca-env-pub-vnet-s4-${var.res_suffix}"
+  name                = "aca-env-pub-vnet-${var.res_suffix}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
@@ -386,7 +387,7 @@ resource "azurerm_container_app_environment" "pub_vnet_env" {
   # Id Format: "/subscriptions/<sub number>/resourceGroups/<rg name>/providers/Microsoft.App/managedEnvironments/aca-env-pub"
 }
 resource "azurerm_container_app" "pub_vnet_app" {
-  name                         = "aca-pub-app-s4-${var.res_suffix}"
+  name                         = substr("aca-app-pub-vnet-${var.res_suffix}", 0, 32)
   container_app_environment_id = azurerm_container_app_environment.pub_vnet_env.id
   resource_group_name          = azurerm_resource_group.this.name
   revision_mode                = "Multiple"
@@ -459,7 +460,7 @@ resource "azurerm_container_app_job" "pub_vnet_job" {
 
 ###  Internal Azure Container App with VNet integration
 resource "azurerm_container_app_environment" "priv_env" {
-  name                = "aca-env-priv-s4-${var.res_suffix}"
+  name                = "aca-env-priv-${var.res_suffix}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
@@ -479,7 +480,7 @@ resource "azurerm_container_app_environment" "priv_env" {
   tags = azurerm_resource_group.this.tags
 }
 resource "azurerm_container_app" "priv_app" {
-  name                         = "aca-priv-app-s4-${var.res_suffix}"
+  name                         = substr("aca-app-priv-${var.res_suffix}", 0, 32)
   container_app_environment_id = azurerm_container_app_environment.priv_env.id
   resource_group_name          = azurerm_resource_group.this.name
   revision_mode                = "Multiple"
@@ -499,7 +500,7 @@ resource "azurerm_container_app" "priv_app" {
 
   ingress {
     allow_insecure_connections = false
-    external_enabled           = false
+    external_enabled           = true # To allow connection from the VNet
     target_port                = 80
     transport                  = "http" # "auto"
 
@@ -591,8 +592,8 @@ resource "azurerm_cdn_frontdoor_origin" "aca" {
 
   certificate_name_check_enabled = true
 
-  host_name          = azurerm_container_app.pub_app.ingress[0].fqdn
-  origin_host_header = azurerm_container_app.pub_app.ingress[0].fqdn
+  host_name          = azurerm_container_app.pub_vnet_app.ingress[0].fqdn
+  origin_host_header = azurerm_container_app.pub_vnet_app.ingress[0].fqdn
   http_port          = 80
   https_port         = 443
   priority           = 1

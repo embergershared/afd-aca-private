@@ -4,7 +4,7 @@ provider "azurerm" {
   client_id       = var.client_id
   client_secret   = var.client_secret
 
-  skip_provider_registration = true
+  skip_provider_registration = false
   storage_use_azuread        = true
 
   features {
@@ -22,7 +22,7 @@ provider "azurerm" {
   client_id       = var.conn_client_id
   client_secret   = var.conn_client_secret
 
-  skip_provider_registration = true
+  skip_provider_registration = false
 
   features {
     resource_group {
@@ -40,7 +40,7 @@ provider "azurerm" {
   client_id       = var.conn_client_id
   client_secret   = var.conn_client_secret
 
-  skip_provider_registration = true
+  skip_provider_registration = false
 
   features {
     resource_group {

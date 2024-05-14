@@ -1,0 +1,14 @@
+# Requires AKS app routing addon: az aks approuting enable --resource-group <rgName> --name <aksClusterName>
+# https://learn.microsoft.com/en-us/azure/aks/create-nginx-ingress-private-controller#create-an-nginx-ingress-controller-with-a-private-ip-address-and-an-internal-load-balancer
+# AKS Internal Load Balancer Annotations ref: https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#customizations-via-kubernetes-annotations
+# PLS Customizations Annotations ref: https://learn.microsoft.com/en-us/azure/aks/internal-lb?tabs=set-service-annotations#pls-customizations-via-annotations
+apiVersion: approuting.kubernetes.azure.com/v1alpha1
+kind: NginxIngressController
+metadata:
+  name: nginx-internal
+spec:
+  ingressClassName: nginx-internal
+  controllerNamePrefix: nginx-internal
+  loadBalancerAnnotations: 
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-pls-create: "true"

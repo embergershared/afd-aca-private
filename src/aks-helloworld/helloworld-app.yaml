@@ -33,7 +33,7 @@ metadata:
   name: aks-helloworld
   namespace: aks-helloworld
 spec:
-  type: ClusterIP # LoadBalancer
+  type: ClusterIP
   ports:
   - port: 80
   selector:

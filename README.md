@@ -111,7 +111,7 @@ It is documented here: [Protect Azure Container Apps with Web Application Firewa
 
 - When `Private Link` will be available for `Container Environment`, one can guess the connection will be similar to the one actually available with `AKS` through an `Internal Load Balancer` with `Private Link Service`.
 
-- Here's an example of `origin` that uses `Private Link` on `AKS`:
+- Here's an example of an application, exposed as a `Front Door endpoint` and backed by an `origin` that uses an `AKS internal ingress controller` through `Private Link Service`:
 
     - the `origin`
 

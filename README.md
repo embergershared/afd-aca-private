@@ -124,3 +124,24 @@ It is documented here: [Protect Azure Container Apps with Web Application Firewa
     ![AFD endpoint](./img/afd-endpoint-to-aks-pls.jpg)
 
   > Note: Using `Private Link` as an `origin` enforces the `Certificate subject name validation`. The `Origin host header` must be matched with the appropriate TLS certificate for the connection to happen.
+
+## Sample infrastructure
+
+The sample infrastructure is deployed with the terraform code in the `./src/terraform` folder.
+
+It requires values to be provided, and follows the recommended Azure Landing Zones structure with:
+
+- a subscription `Management` with:
+
+  - a `Key vault`
+  - a `Storage account` for the `Terraform state` & `Logs`
+  - a `Log Analytics workspace`
+
+- a subscription `Networking` with:
+
+  - a Hub `Virtual Network` that will be peered with the `Container Apps` `Virtual Network`
+  - all adequate `Private DNS resolution` and `Routing` for connectivity
+
+- a subscription for the workload (usually called `Application Landing Zone`)
+
+- `terraform` appropriate `service principal(s)` with permissions to these subscriptions.

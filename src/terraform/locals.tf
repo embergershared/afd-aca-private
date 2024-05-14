@@ -33,4 +33,9 @@ locals {
     "Terraform_plan"   = "embergershared/aks-aca-private/src/terraform/main.tf",
     "Terraform_values" = "embergershared/aks-aca-private/src/terraform/secret.auto.tfvars",
   })
+
+  # Get Azure Service Tags IPs for "AzureFrontDoor.Backend"
+  az_service_tags  = jsondecode(file("${var.azure_tags_json_file_path}"))
+  afd_ip_ranges    = [for el in local.az_service_tags.values : el.properties.addressPrefixes if el.name == "AzureFrontDoor.Backend"][0]
+  afd_ip_v4_ranges = [for cidr in local.afd_ip_ranges : cidr if can(cidrnetmask(cidr))] # OR can(regex("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",cidr))
 }

@@ -560,6 +560,7 @@ resource "azurerm_cdn_frontdoor_endpoint" "this" {
   tags = azurerm_resource_group.this.tags
 
   # Id Format: "/subscriptions/<sub number>/resourceGroups/<rg name>/providers/Microsoft.Cdn/profiles/afd-s4-afd-aca-priv-01/afdEndpoints/hello-aca"
+  # PowerShell status: while ($true) { Invoke-WebRequest https://hello-aca-gwg4dvgxdaeqadhs.b01.azurefd.net/ ; Start-Sleep -Seconds 5 ; Write-Host "Querying" }
 }
 # "Microsoft.Cdn/profiles/origingroups"
 resource "azurerm_cdn_frontdoor_origin_group" "this" {

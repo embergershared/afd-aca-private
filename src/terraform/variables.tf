@@ -39,7 +39,10 @@ variable "loc_sub" {}
 variable "location" {}
 
 variable "vnet_address_space" {}
-variable "azure_tags_json_file_path" {}
+variable "azure_tags_json_file_path" {
+  type        = string
+  description = "Location of the downloaded file from this URL: https://www.microsoft.com/en-us/download/details.aspx?id=56519"
+}
 
 # # TLS Certificate
 # variable "pfx_cert_name" {}

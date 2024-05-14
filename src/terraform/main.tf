@@ -19,23 +19,14 @@
 #
 # Created on    : 2024-05-09
 # Created by    : Emmanuel
-# Last Modified : 2024-05-13
+# Last Modified : 2024-05-14
 # Last Modif by : Emmanuel
-# Modif desc.   : Added the Azure Front Door resources + testing
+# Modif desc.   : Dedicate to Public + VNet to expose Private Endpoints to the ACA Apps
 
 
 #--------------------------------------------------------------
 #   Basics
 #--------------------------------------------------------------
-# Random string for resources
-resource "random_string" "this" {
-  length    = 4
-  lower     = true
-  upper     = false
-  numeric   = false
-  special   = false
-  min_lower = 4
-}
 # Timestamp for the Created_on tag
 resource "time_static" "this" {}
 
